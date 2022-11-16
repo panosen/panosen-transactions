@@ -14,20 +14,40 @@ namespace Panosen.Transactions
         public List<Operation> Operations { get; set; }
 
         /// <summary>
+        /// 是否已经执行过
+        /// </summary>
+        private bool executed = false;
+
+        /// <summary>
         /// Dispose
         /// </summary>
         public void Dispose()
         {
-            if (this.Operations == null || this.Operations.Count == 0)
+            if (this.executed)
             {
                 return;
+            }
+
+            this.Execute();
+        }
+
+        /// <summary>
+        /// 执行事务
+        /// </summary>
+        public bool Execute()
+        {
+            this.executed = true;
+
+            if (this.Operations == null || this.Operations.Count == 0)
+            {
+                return true;
             }
 
             //Check
             var check = Check();
             if (!check)
             {
-                return;
+                return false;
             }
 
             //Prepare
@@ -35,7 +55,7 @@ namespace Panosen.Transactions
             if (!prepareSuccess)
             {
                 Rollback();
-                return;
+                return false;
             }
 
             //Commit
@@ -43,7 +63,10 @@ namespace Panosen.Transactions
             if (!commit)
             {
                 Rollback();
+                return false;
             }
+
+            return true;
         }
 
         private bool Check()
